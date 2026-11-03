@@ -36,7 +36,18 @@ questions:
       The waste bin or dumpster is overflowing or overfilled:
       trash bags or debris piled above the rim, spilling out,
       or the lid forced open/propped up by trash on top.
+  fill:
+    type: score
+    instructions: How full is this trash bin, dumpster, or waste container?
+    criteria:
+      - empty or low
+      - about half
+      - nearly full
+      - overflowing
 
 thresholds:
   overflow:
     noul: 0.55
+  fill:
+    score: 2.5
+

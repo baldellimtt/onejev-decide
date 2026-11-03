@@ -61,8 +61,13 @@ def main() -> None:
         row["expected"] = expected
         row["seconds"] = round(time.perf_counter() - t0, 2)
         results.append(row)
-        a = row["answers"].get("overflow") or {}
-        print(f"[{row['status']:7}] {path.name}  overflow={a.get('value')}  {row['seconds']}s  expected={expected}")
+        o = row["answers"].get("overflow") or {}
+        f = row["answers"].get("fill") or {}
+        fill_bit = f"  fill={f.get('value')} ({f.get('label')})" if f else ""
+        print(
+            f"[{row['status']:7}] {path.name}  overflow={o.get('value')}{fill_bit}  "
+            f"{row['seconds']}s  expected={expected}"
+        )
 
     with out.open("w", encoding="utf-8") as f:
         for row in results:
