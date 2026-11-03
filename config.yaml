@@ -33,8 +33,9 @@ questions:
   overflow:
     type: noul
     instructions: >-
-      The trash bin, dumpster, or waste container is overflowing:
-      trash spills out or is piled clearly above the rim.
+      The waste bin or dumpster is overflowing or overfilled:
+      trash bags or debris piled above the rim, spilling out,
+      or the lid forced open/propped up by trash on top.
 
 thresholds:
   overflow:
