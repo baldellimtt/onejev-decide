@@ -16,18 +16,27 @@ Typical warm latency (RTX 3050): **~0.3–0.7 s** (IQ4_XS, vision cap 128, boot 
 ```bash
 git clone https://github.com/baldellimtt/onejev-decide.git
 cd onejev-decide
-./scripts/up.sh          # Linux/macOS
-# .\scripts\up.ps1       # Windows
+
+# Windows (prints UI/API URLs after Healthy)
+up.cmd
+# or:  .\scripts\up.ps1
+
+# Linux/macOS
+./scripts/up.sh
 ```
 
-After compose finishes healthy, the script prints:
+`docker compose up -d` alone **hides** container logs (by design). Use `up.cmd` / `scripts/up.*`, or:
+
+```bash
+docker compose up -d && docker compose logs ready --no-log-prefix
+```
 
 ```text
  API   http://127.0.0.1:8000
  UI    http://127.0.0.1:7860
 ```
 
-On start the container runs a **warmup** inference. Then:
+On start the API container runs a **warmup** inference. Then:
 
 ```bash
 docker compose run --rm infer data/incident/incident_01.jpg --pretty

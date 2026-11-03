@@ -30,11 +30,14 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     def index():
-        return FileResponse(UI_DIR / "index.html")
+        return FileResponse(
+            UI_DIR / "index.html",
+            headers={"Cache-Control": "no-store, max-age=0"},
+        )
 
     @app.get("/api/config")
     def api_config():
-        cfg = get_config()
+        cfg = reload_config()
         samples = []
         for key, folder in (("normal", Path(cfg["paths"]["normal"])), ("incident", Path(cfg["paths"]["incident"]))):
             if not folder.exists():
@@ -53,7 +56,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/sample/{split}/{name}")
     def api_sample(split: str, name: str):
-        cfg = get_config()
+        cfg = reload_config()
         base = {"normal": Path(cfg["paths"]["normal"]), "incident": Path(cfg["paths"]["incident"])}.get(split)
         if base is None:
             return JSONResponse({"detail": "unknown split"}, status_code=404)
@@ -64,7 +67,7 @@ def create_app() -> FastAPI:
 
     @app.post("/api/decide")
     async def api_decide(image: UploadFile = File(...), task: str = Form(""), questions: str = Form("")):
-        cfg = dict(get_config())
+        cfg = dict(reload_config())
         if task.strip():
             cfg = {**cfg, "task": {**cfg.get("task", {}), "name": task.strip()}}
         if questions.strip():

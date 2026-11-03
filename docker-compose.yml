@@ -38,10 +38,41 @@ services:
       - ./config.yaml:/app/config.yaml:ro
       - ./data:/app/data
       - ./ui:/app/ui:ro
+      - ./scripts:/app/scripts:ro
+      - ./onejev_decide:/app/onejev_decide:ro
     environment:
       DECISION_CONFIG: /app/config.yaml
       DECISION_SERVER_URL: http://onejev:8000
     entrypoint: ["python3", "scripts/ui.py", "--host", "0.0.0.0", "--port", "7860"]
+
+  # Prints connect URLs after stack is up (see also scripts/up.ps1 / up.sh)
+  ready:
+    image: onejev-decide:latest
+    pull_policy: never
+    depends_on:
+      onejev:
+        condition: service_healthy
+      ui:
+        condition: service_started
+    restart: "no"
+    entrypoint:
+      - python3
+      - -c
+      - |
+        import os
+        port = os.environ.get("PORT", "8000")
+        ui = os.environ.get("UI_PORT", "7860")
+        print()
+        print("========================================")
+        print(" onejev-decide ready")
+        print(f"   API   http://127.0.0.1:{port}")
+        print(f"   UI    http://127.0.0.1:{ui}")
+        print("   infer docker compose run --rm infer data/incident/incident_01.jpg --pretty")
+        print("========================================")
+        print()
+    environment:
+      PORT: ${PORT:-8000}
+      UI_PORT: ${UI_PORT:-7860}
 
   # docker compose run --rm infer data/incident/incident_01.jpg --pretty
   infer:

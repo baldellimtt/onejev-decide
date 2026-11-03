@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
 <title>Decision Playground</title>
 <style>
   :root { --bg:#f7f7f5; --fg:#1b1b1b; --muted:#6b6b6b; --card:#fff; --line:#e3e3df; --acc:#2f6f4f; --bar:#8fd3ae; --warn:#c0392b; --ok:#2f6f4f; }
@@ -18,11 +19,11 @@
   @media (max-width:820px){ .grid{ grid-template-columns:1fr; } }
   .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
   label { display:block; font-weight:600; margin:0 0 6px; }
-  textarea, select {
+  textarea {
     width:100%; font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
     padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+    min-height:72px; resize:vertical;
   }
-  textarea { min-height:160px; resize:vertical; }
   button {
     background:var(--acc); color:#fff; border:0; border-radius:8px; padding:10px 16px; font-weight:600; cursor:pointer;
   }
@@ -35,13 +36,32 @@
   }
   .drop.drag { border-color:var(--acc); color:var(--acc); }
   .drop img { max-width:100%; max-height:280px; border-radius:8px; object-fit:contain; }
-  .ans { margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
-  .ans h3 { margin:0 0 6px; font-size:14px; }
+  .qbox { margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+  .qcard {
+    border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--bg);
+  }
+  .qcard .top { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+  .qcard .qid { font-weight:700; }
+  .chip {
+    display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700;
+    background:color-mix(in srgb, var(--acc) 16%, transparent); color:var(--acc);
+  }
+  .chip.score { background:color-mix(in srgb, #3b6ea5 18%, transparent); color:#3b6ea5; }
+  @media (prefers-color-scheme: dark) {
+    .chip.score { color:#8eb6e8; }
+  }
+  .qcard .instr { color:var(--muted); font-size:12px; margin:0 0 8px; }
+  .classes { display:flex; flex-wrap:wrap; gap:6px; }
+  .classes span {
+    border:1px solid var(--line); border-radius:999px; padding:3px 9px; font-size:12px; background:var(--card);
+  }
+  .ans { margin-top:14px; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); }
+  .ans h3 { margin:0 0 8px; font-size:14px; }
   .ans .kind { color:var(--muted); font-weight:400; margin-left:6px; }
-  .bar { display:grid; grid-template-columns: 160px 1fr 56px; gap:8px; align-items:center; margin:3px 0; }
+  .bar { display:grid; grid-template-columns: 140px 1fr 56px; gap:8px; align-items:center; margin:4px 0; }
   .bar .track { height:12px; background:var(--line); border-radius:6px; overflow:hidden; }
   .bar .fill { height:100%; background:var(--bar); }
-  .bar .lbl { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar .lbl { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
   .meta { color:var(--muted); font-size:12px; margin-top:10px; }
   .err { color:var(--warn); white-space:pre-wrap; }
   .badge {
@@ -58,12 +78,14 @@
   code { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; }
   .samples { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
   .samples button { padding:6px 10px; font-size:12px; }
+  details.json { margin-top:12px; }
+  details.json summary { cursor:pointer; color:var(--muted); font-size:12px; }
 </style>
 </head>
 <body>
 <main>
   <h1>Decision Playground</h1>
-  <p class="sub">Upload an image and evaluate typed questions from <code>config.yaml</code> (same flow as <code>decide</code>).</p>
+  <p class="sub">Upload an image. Typed OneJev questions (noul / score / choice) come from <code>config.yaml</code>.</p>
 
   <div class="grid">
     <div class="card">
@@ -78,8 +100,13 @@
       <label style="margin-top:14px" for="task">Task</label>
       <textarea id="task" rows="2"></textarea>
 
-      <label style="margin-top:12px" for="questions">Questions (JSON)</label>
-      <textarea id="questions"></textarea>
+      <label style="margin-top:14px">Questions</label>
+      <div class="qbox" id="qbox"><span class="meta">Loading config…</span></div>
+
+      <details class="json">
+        <summary>Advanced: edit questions JSON</summary>
+        <textarea id="questions" style="margin-top:8px; min-height:160px"></textarea>
+      </details>
 
       <div class="row">
         <button id="run">Evaluate</button>
@@ -90,13 +117,14 @@
 
     <div class="card">
       <label>Result</label>
-      <div id="out"><span class="meta">Nothing yet.</span></div>
+      <div id="out"><span class="meta">Nothing yet. Pick a sample and click Evaluate — you should see <b>noul</b> and <b>score / classification</b> blocks.</span></div>
     </div>
   </div>
 </main>
 <script>
 const $ = (id) => document.getElementById(id);
 let selectedFile = null;
+let cachedQuestions = {};
 
 function bars(probs) {
   return Object.entries(probs).map(([k, v]) => {
@@ -124,11 +152,39 @@ $("file").addEventListener("change", (e) => pickFile(e.target.files[0]));
 ["dragleave","drop"].forEach(ev => $("drop").addEventListener(ev, e => { e.preventDefault(); $("drop").classList.remove("drag"); }));
 $("drop").addEventListener("drop", e => pickFile(e.dataTransfer.files[0]));
 
+function renderQuestionCards(questions) {
+  const box = $("qbox");
+  const entries = Object.entries(questions || {});
+  if (!entries.length) {
+    box.innerHTML = `<span class="err">No questions in config.yaml</span>`;
+    return;
+  }
+  box.innerHTML = entries.map(([id, q]) => {
+    const type = q.type || "?";
+    const chipClass = type === "score" ? "chip score" : "chip";
+    const title = type === "score" ? "score · classification" : type;
+    let body = `<div class="instr">${q.instructions || ""}</div>`;
+    if (type === "score" && Array.isArray(q.criteria)) {
+      body += `<div class="classes">${q.criteria.map((c, i) => `<span>${i}. ${c}</span>`).join("")}</div>`;
+    }
+    if (type === "choice" && q.choices) {
+      const opts = Array.isArray(q.choices) ? q.choices : Object.keys(q.choices);
+      body += `<div class="classes">${opts.map((c) => `<span>${c}</span>`).join("")}</div>`;
+    }
+    if (type === "noul") {
+      body += `<div class="classes"><span>yes</span><span>no</span></div>`;
+    }
+    return `<div class="qcard"><div class="top"><span class="qid">${id}</span><span class="${chipClass}">${title}</span></div>${body}</div>`;
+  }).join("");
+}
+
 async function loadConfig() {
-  const r = await fetch("/api/config");
+  const r = await fetch("/api/config?ts=" + Date.now(), { cache: "no-store" });
   const cfg = await r.json();
   $("task").value = cfg.task?.name || "";
-  $("questions").value = JSON.stringify(cfg.questions || {}, null, 2);
+  cachedQuestions = cfg.questions || {};
+  $("questions").value = JSON.stringify(cachedQuestions, null, 2);
+  renderQuestionCards(cachedQuestions);
   const box = $("samples");
   box.innerHTML = "";
   (cfg.samples || []).forEach(s => {
@@ -145,25 +201,55 @@ async function loadConfig() {
   });
 }
 
+function questionSpecs() {
+  try {
+    const fromBox = JSON.parse($("questions").value || "{}");
+    if (fromBox && Object.keys(fromBox).length) return fromBox;
+  } catch {}
+  return cachedQuestions || {};
+}
+
+function scoreBars(probs, criteria) {
+  const labeled = {};
+  for (const [k, v] of Object.entries(probs || {})) {
+    const i = Number(k);
+    const name = Array.isArray(criteria) && criteria[i] != null ? `${i}. ${criteria[i]}` : k;
+    labeled[name] = v;
+  }
+  return bars(labeled);
+}
+
 function renderAnswers(data, roundTripMs) {
   const status = data.status === "alarm" ? "alarm" : "ok";
   const sec = data.seconds != null ? Number(data.seconds) : (roundTripMs / 1000);
   const ms = Math.round(sec * 1000);
+  const specs = questionSpecs();
   let html = `<div><span class="badge ${status}">${data.status}</span></div>`;
   html += `<div class="timing"><span class="t">${sec.toFixed(2)}s</span><span class="u">end-to-end inference (${ms} ms)</span></div>`;
   const answers = data.answers || {};
-  for (const [id, a] of Object.entries(answers)) {
+  const ids = Object.keys(answers);
+  if (!ids.length) {
+    html += `<div class="err">No answers returned.</div>`;
+  }
+  for (const id of ids) {
+    const a = answers[id];
+    const spec = specs[id] || {};
     if (a.type === "noul") {
-      html += `<div class="ans"><h3>${id}<span class="kind">noul</span></h3>${bars({ yes: a.value, no: 1 - a.value })}</div>`;
+      html += `<div class="ans"><h3>${id}<span class="kind">noul · yes/no</span></h3>${bars({ yes: a.value, no: 1 - a.value })}</div>`;
     } else if (a.type === "score") {
       const probs = a.probabilities || {};
-      const legend = Object.keys(probs).length ? bars(probs) : `<div class="meta">score ${a.value}${a.label ? " → " + a.label : ""}</div>`;
-      html += `<div class="ans"><h3>${id}<span class="kind">score: <b>${a.value}</b>${a.label ? " (" + a.label + ")" : ""}</span></h3>${legend}</div>`;
+      const legend = Object.keys(probs).length
+        ? scoreBars(probs, spec.criteria || [])
+        : `<div class="meta">score ${a.value}${a.label ? " → " + a.label : ""}</div>`;
+      html += `<div class="ans"><h3>${id}<span class="kind">score · classification: <b>${a.label || a.value}</b> (${a.value})</span></h3>${legend}</div>`;
     } else if (a.type === "choice") {
       html += `<div class="ans"><h3>${id}<span class="kind">choice: <b>${a.value}</b></span></h3>${a.probabilities ? bars(a.probabilities) : ""}</div>`;
     } else {
       html += `<div class="ans"><h3>${id}</h3><pre>${JSON.stringify(a, null, 2)}</pre></div>`;
     }
+  }
+  if (!answers.fill) {
+    html += `<div class="err">Missing <b>fill</b> (score). Click Reload config, then Evaluate again.</div>`;
   }
   html += `<div class="meta">${data.file || ""}</div>`;
   return html;
@@ -172,9 +258,17 @@ function renderAnswers(data, roundTripMs) {
 async function run() {
   const btn = $("run"), out = $("out"), st = $("status");
   if (!selectedFile) { out.innerHTML = `<div class="err">Select an image.</div>`; return; }
+
+  // Always refresh questions from server so fill/score cannot stay stale
+  try { await loadConfig(); } catch (_) {}
+
   let questions;
   try { questions = JSON.parse($("questions").value); }
   catch (e) { out.innerHTML = `<div class="err">Invalid questions JSON: ${e.message}</div>`; return; }
+  if (!questions.fill) {
+    out.innerHTML = `<div class="err">Config has no <b>fill</b> score question. Check config.yaml.</div>`;
+    return;
+  }
 
   const fd = new FormData();
   fd.append("image", selectedFile);
@@ -200,6 +294,9 @@ async function run() {
 
 $("run").addEventListener("click", run);
 $("reload").addEventListener("click", () => loadConfig().catch(e => { $("out").innerHTML = `<div class="err">${e.message}</div>`; }));
+$("questions").addEventListener("change", () => {
+  try { renderQuestionCards(JSON.parse($("questions").value || "{}")); } catch {}
+});
 loadConfig().catch(e => { $("out").innerHTML = `<div class="err">Config: ${e.message}. Start scripts/ui.py</div>`; });
 </script>
 </body>
