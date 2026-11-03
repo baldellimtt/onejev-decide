@@ -1,0 +1,8 @@
+httpx
+pillow
+PyYAML>=6.0
+fastapi
+uvicorn
+python-multipart
+# qev (OneJev server): pip install git+https://github.com/OmniJev/OneJev.git
+# runtime: llama-server nel PATH (winget ggml.llamacpp | release llama.cpp Linux)

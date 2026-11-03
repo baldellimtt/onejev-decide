@@ -1,0 +1,12 @@
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.git
+.gitignore
+outputs
+*.md
+!README.md
+agent-transcripts
+.idea
+.vscode

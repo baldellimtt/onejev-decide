@@ -1,0 +1,65 @@
+name: onejev-decide
+
+services:
+  onejev:
+    build: .
+    image: onejev-decide:latest
+    ports:
+      - "${PORT:-8000}:8000"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - hf-cache:/cache/huggingface
+    environment:
+      DECISION_CONFIG: /app/config.yaml
+      HF_HOME: /cache/huggingface
+      QEV_DEBIAS: "0"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    gpus: all
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8000/v1/models"]
+      interval: 10s
+      timeout: 5s
+      retries: 90
+      start_period: 30s
+    restart: unless-stopped
+
+  ui:
+    image: onejev-decide:latest
+    pull_policy: never
+    depends_on:
+      onejev:
+        condition: service_healthy
+    ports:
+      - "${UI_PORT:-7860}:7860"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data
+      - ./ui:/app/ui:ro
+    environment:
+      DECISION_CONFIG: /app/config.yaml
+      DECISION_SERVER_URL: http://onejev:8000
+    entrypoint: ["python3", "scripts/ui.py", "--host", "0.0.0.0", "--port", "7860"]
+
+  # docker compose run --rm infer data/incident/incident_01.jpg --pretty
+  infer:
+    image: onejev-decide:latest
+    pull_policy: never
+    profiles: ["tools"]
+    depends_on:
+      onejev:
+        condition: service_healthy
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+    environment:
+      DECISION_CONFIG: /app/config.yaml
+      DECISION_SERVER_URL: http://onejev:8000
+    entrypoint:
+      ["python3", "scripts/infer.py", "--server", "http://onejev:8000"]
+
+volumes:
+  hf-cache:
