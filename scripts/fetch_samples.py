@@ -1,4 +1,4 @@
-"""Scarica foto sample normal vs overflowing (Wikimedia thumbnails)."""
+"""Download sample normal vs overflowing photos (Wikimedia thumbnails)."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ INCIDENT = [
     "Full trash bin 0001.jpg",
     "Bin overflowing with Starbucks paper cups.jpg",
     "Dont think this bin will take any more ! (6861377341).jpg",
-    # pieno al limite (prima scaricato per errore come normal_02)
+    # borderline overflow (was mistakenly fetched as normal_02)
     "Public Litter Bin (0923) - Railway Street, Gillingham, Medway.jpg",
 ]
 
@@ -97,7 +97,7 @@ def main() -> None:
     ok = pull(NORMAL, NORMAL_DIR, "normal") + pull(INCIDENT, INCIDENT_DIR, "incident")
     print(f"done: {ok} images")
     if ok == 0:
-        raise SystemExit("Nessuna immagine. Metti JPG in data/normal e data/incident.")
+        raise SystemExit("No images downloaded. Place JPGs in data/normal and data/incident.")
 
 
 if __name__ == "__main__":

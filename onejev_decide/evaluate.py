@@ -6,7 +6,7 @@ from typing import Iterable
 def confusion(rows: Iterable[dict]) -> dict[str, int]:
     tp = fp = tn = fn = 0
     for r in rows:
-        pred = r.get("stato") == "allarme"
+        pred = r.get("status") == "alarm"
         truth = r.get("expected") == "incident"
         if pred and truth:
             tp += 1

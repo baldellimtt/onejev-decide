@@ -1,4 +1,4 @@
-"""CLI: una immagine → JSON."""
+"""CLI: one image → JSON."""
 
 from __future__ import annotations
 

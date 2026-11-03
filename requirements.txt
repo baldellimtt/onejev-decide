@@ -5,4 +5,4 @@ fastapi
 uvicorn
 python-multipart
 # qev (OneJev server): pip install git+https://github.com/OmniJev/OneJev.git
-# runtime: llama-server nel PATH (winget ggml.llamacpp | release llama.cpp Linux)
+# runtime: llama-server on PATH (winget ggml.llamacpp | llama.cpp Linux release)

@@ -1,41 +1,44 @@
 # onejev-decide
 
 Typed visual decisions with [OneJev](https://github.com/OmniJev/OneJev): YAML → calibrated answers → alert.  
-Package Python atomico `onejev_decide` + Docker GPU + playground.
+Lean Python package `onejev_decide` + GPU Docker + playground UI.
 
-Warm latency tipica (RTX 3050): **~0.3–0.7 s** (IQ4_XS, vision cap 128, warmup al boot).
+Typical warm latency (RTX 3050): **~0.3–0.7 s** (IQ4_XS, vision cap 128, boot warmup).
 
 ---
 
 ## Install
 
-### A) Docker GPU (consigliato)
+### A) Docker GPU (recommended)
 
-**Requisiti:** Docker Desktop + NVIDIA.
+**Requirements:** Docker Desktop + NVIDIA.
 
 ```bash
-git clone https://github.com/YOUR_USER/onejev-decide.git
+git clone https://github.com/baldellimtt/onejev-decide.git
 cd onejev-decide
-docker compose up -d --build
+./scripts/up.sh          # Linux/macOS
+# .\scripts\up.ps1       # Windows
 ```
 
-| | |
-|---|---|
-| API | http://127.0.0.1:8000 |
-| UI | http://127.0.0.1:7860 |
+After compose finishes healthy, the script prints:
 
-All’avvio il container fa **warmup** (prima inferenza automatica). Poi:
+```text
+ API   http://127.0.0.1:8000
+ UI    http://127.0.0.1:7860
+```
+
+On start the container runs a **warmup** inference. Then:
 
 ```bash
 docker compose run --rm infer data/incident/incident_01.jpg --pretty
 ```
 
-### B) Windows nativo
+### B) Native Windows
 
-**Requisiti:** [uv](https://docs.astral.sh/uv/), `llama-server`.
+**Requirements:** [uv](https://docs.astral.sh/uv/), `llama-server`.
 
 ```powershell
-git clone https://github.com/YOUR_USER/onejev-decide.git
+git clone https://github.com/baldellimtt/onejev-decide.git
 cd onejev-decide
 .\scripts\setup.ps1
 .\scripts\serve.ps1
@@ -47,10 +50,10 @@ cd onejev-decide
 .\.venv\Scripts\python.exe scripts\infer.py data\incident\incident_01.jpg --pretty
 ```
 
-### C) Ubuntu nativo
+### C) Native Ubuntu
 
 ```bash
-git clone https://github.com/YOUR_USER/onejev-decide.git
+git clone https://github.com/baldellimtt/onejev-decide.git
 cd onejev-decide
 chmod +x scripts/*.sh
 ./scripts/setup.sh
@@ -74,25 +77,27 @@ python scripts/fetch_samples.py
 
 ```text
 onejev_decide/
-  decide.py      # API pubblica
-  client.py      # HTTP pooled
-  media.py       # resize JPEG
-  answers.py     # normalize + soglie
+  decide.py      # public API
+  client.py      # pooled HTTP
+  media.py       # JPEG resize
+  answers.py     # normalize + thresholds
   questions.py   # YAML → System One
   warmup.py      # cold-start killer
-config.yaml      # modello + latenza + domande
+config.yaml      # model + latency + questions
 ```
 
 ```python
+from pathlib import Path
 from onejev_decide import decide
-print(decide(Path("foto.jpg")))
+
+print(decide(Path("photo.jpg")))
 ```
 
 ---
 
-## Config (latenza)
+## Config (latency)
 
-[`config.yaml`](config.yaml): `IQ4_XS`, `max_image_side: 320`, `image_max_tokens: 128`, `warmup: true`, una sola domanda `overflow`.
+[`config.yaml`](config.yaml): `IQ4_XS`, `max_image_side: 320`, `image_max_tokens: 128`, `warmup: true`, single `overflow` question.
 
 ---
 

@@ -1,4 +1,4 @@
-﻿# OneJev GGUF — legge model/port/ctx da config.yaml
+﻿# OneJev GGUF — reads model/port/ctx from config.yaml
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
@@ -11,7 +11,7 @@ if (-not $env:DECISION_CONFIG) {
 $env:QEV_DEBIAS = if ($env:QEV_DEBIAS) { $env:QEV_DEBIAS } else { "0" }
 
 if (-not (Get-Command llama-server -ErrorAction SilentlyContinue)) {
-    Write-Host "llama-server non trovato. Installa: winget install ggml.llamacpp"
+    Write-Host "llama-server not found. Install: winget install ggml.llamacpp"
     exit 1
 }
 

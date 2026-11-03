@@ -1,4 +1,4 @@
-"""HTTP client persistente verso qev."""
+"""Persistent HTTP client to qev."""
 
 from __future__ import annotations
 

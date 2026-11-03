@@ -22,7 +22,7 @@ PY
 )
 
 if ! command -v llama-server >/dev/null 2>&1; then
-  echo "llama-server non trovato nel PATH"
+  echo "llama-server not found in PATH"
   exit 1
 fi
 

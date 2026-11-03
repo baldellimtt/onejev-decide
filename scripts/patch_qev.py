@@ -1,4 +1,4 @@
-"""Patch qev: Q8 mmproj, vision tokens bassi, flash-attn, -ngl, max_pixels."""
+"""Patch qev: Q8 mmproj, low vision tokens, flash-attn, -ngl, max_pixels."""
 from __future__ import annotations
 
 import sys

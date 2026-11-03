@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -63,13 +63,13 @@
 <body>
 <main>
   <h1>Decision Playground</h1>
-  <p class="sub">Carica un’immagine, valuta le domande tipizzate da <code>config.yaml</code> (stesso flusso di <code>decide</code>).</p>
+  <p class="sub">Upload an image and evaluate typed questions from <code>config.yaml</code> (same flow as <code>decide</code>).</p>
 
   <div class="grid">
     <div class="card">
-      <label>Immagine</label>
+      <label>Image</label>
       <div class="drop" id="drop" tabindex="0">
-        <span id="dropHint">Trascina qui, clicca per scegliere, oppure usa un sample</span>
+        <span id="dropHint">Drop here, click to choose, or use a sample</span>
         <img id="preview" alt="" hidden>
       </div>
       <input type="file" id="file" accept="image/*" hidden>
@@ -83,14 +83,14 @@
 
       <div class="row">
         <button id="run">Evaluate</button>
-        <button class="ghost" id="reload" type="button">Ricarica config</button>
+        <button class="ghost" id="reload" type="button">Reload config</button>
         <span id="status" class="meta"></span>
       </div>
     </div>
 
     <div class="card">
-      <label>Risultato</label>
-      <div id="out"><span class="meta">Niente ancora.</span></div>
+      <label>Result</label>
+      <div id="out"><span class="meta">Nothing yet.</span></div>
     </div>
   </div>
 </main>
@@ -109,7 +109,7 @@ function setPreview(url, name) {
   const img = $("preview");
   img.src = url;
   img.hidden = false;
-  $("dropHint").textContent = name || "immagine selezionata";
+  $("dropHint").textContent = name || "image selected";
 }
 
 function pickFile(file) {
@@ -146,11 +146,11 @@ async function loadConfig() {
 }
 
 function renderAnswers(data, roundTripMs) {
-  const stato = data.stato === "allarme" ? "alarm" : "ok";
+  const status = data.status === "alarm" ? "alarm" : "ok";
   const sec = data.seconds != null ? Number(data.seconds) : (roundTripMs / 1000);
   const ms = Math.round(sec * 1000);
-  let html = `<div><span class="badge ${stato}">${data.stato}</span></div>`;
-  html += `<div class="timing"><span class="t">${sec.toFixed(2)}s</span><span class="u">inferenza end-to-end (${ms} ms)</span></div>`;
+  let html = `<div><span class="badge ${status}">${data.status}</span></div>`;
+  html += `<div class="timing"><span class="t">${sec.toFixed(2)}s</span><span class="u">end-to-end inference (${ms} ms)</span></div>`;
   const answers = data.answers || {};
   for (const [id, a] of Object.entries(answers)) {
     if (a.type === "noul") {
@@ -171,17 +171,17 @@ function renderAnswers(data, roundTripMs) {
 
 async function run() {
   const btn = $("run"), out = $("out"), st = $("status");
-  if (!selectedFile) { out.innerHTML = `<div class="err">Seleziona un’immagine.</div>`; return; }
+  if (!selectedFile) { out.innerHTML = `<div class="err">Select an image.</div>`; return; }
   let questions;
   try { questions = JSON.parse($("questions").value); }
-  catch (e) { out.innerHTML = `<div class="err">questions JSON non valido: ${e.message}</div>`; return; }
+  catch (e) { out.innerHTML = `<div class="err">Invalid questions JSON: ${e.message}</div>`; return; }
 
   const fd = new FormData();
   fd.append("image", selectedFile);
   fd.append("task", $("task").value);
   fd.append("questions", JSON.stringify(questions));
 
-  btn.disabled = true; st.textContent = "evaluating..."; out.innerHTML = `<span class="meta">in corso…</span>`;
+  btn.disabled = true; st.textContent = "evaluating..."; out.innerHTML = `<span class="meta">running…</span>`;
   const t0 = performance.now();
   try {
     const r = await fetch("/api/decide", { method: "POST", body: fd });
@@ -200,7 +200,7 @@ async function run() {
 
 $("run").addEventListener("click", run);
 $("reload").addEventListener("click", () => loadConfig().catch(e => { $("out").innerHTML = `<div class="err">${e.message}</div>`; }));
-loadConfig().catch(e => { $("out").innerHTML = `<div class="err">Config: ${e.message}. Avvia scripts/ui.py</div>`; });
+loadConfig().catch(e => { $("out").innerHTML = `<div class="err">Config: ${e.message}. Start scripts/ui.py</div>`; });
 </script>
 </body>
 </html>

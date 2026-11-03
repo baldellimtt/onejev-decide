@@ -1,4 +1,4 @@
-# onejev-decide — latenza aggressiva (RTX 3050)
+# onejev-decide — aggressive latency (RTX 3050)
 
 model:
   gguf: "mradermacher/OneJev1.6-0.8B-GGUF:IQ4_XS"

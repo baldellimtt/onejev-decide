@@ -1,4 +1,4 @@
-"""Warmup post-boot: elimina il cold-start sulla prima inferenza utente."""
+"""Post-boot warmup: avoid cold-start on the first user inference."""
 
 from __future__ import annotations
 

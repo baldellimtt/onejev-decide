@@ -62,7 +62,7 @@ def main() -> None:
         row["seconds"] = round(time.perf_counter() - t0, 2)
         results.append(row)
         a = row["answers"].get("overflow") or {}
-        print(f"[{row['stato']:7}] {path.name}  overflow={a.get('value')}  {row['seconds']}s  expected={expected}")
+        print(f"[{row['status']:7}] {path.name}  overflow={a.get('value')}  {row['seconds']}s  expected={expected}")
 
     with out.open("w", encoding="utf-8") as f:
         for row in results:

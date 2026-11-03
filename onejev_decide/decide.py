@@ -33,7 +33,7 @@ def decide(
     }
     out: dict[str, Any] = {
         "file": str(image_path),
-        "stato": "allarme" if is_alert(answers, cfg.get("thresholds")) else "ok",
+        "status": "alarm" if is_alert(answers, cfg.get("thresholds")) else "ok",
         "answers": answers,
     }
     if (cfg.get("inference") or {}).get("include_raw"):
